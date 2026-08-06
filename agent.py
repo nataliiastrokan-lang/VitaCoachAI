@@ -334,6 +334,13 @@ def calorie_calculator(query: str) -> str:
                 activity = level
                 break
 
+    if activity is None:
+        return (
+            "Для розрахунку добової потреби в калоріях "
+            "потрібно уточнити рівень активності: "
+            "мінімальна, легка, помірна, висока або екстремальна."
+        )
+
     bmr = calculate_bmr(weight_kg, height_cm, age, gender)
     tdee = bmr * ACTIVITY_LEVELS[activity]
 
