@@ -2,7 +2,7 @@ import re
 from typing import Any
 
 import streamlit as st
-from agent import agent
+from agent import agent, exercise_lookup
 
 
 # ---------------------------------------------------------
@@ -460,6 +460,40 @@ def build_profile_context() -> str:
         "збережені параметри разом із поточним запитом."
     )
 
+def is_exercise_request(text: str) -> bool:
+    """Визначає, чи користувач просить конкретні вправи."""
+
+    text = text.lower()
+
+    exercise_patterns = [
+        r"\bвправ\w*",
+        r"\bтренуван\w*",
+        r"\bукріп\w*",
+        r"\bзміцн\w*",
+        r"\bпідкач\w*",
+        r"\bкачат\w*",
+    ]
+
+    muscle_patterns = [
+        r"\bгруд\w*",
+        r"\bспин\w*",
+        r"\b(?:ног|ніг)\w*",
+        r"\b(?:прес|живіт|живот)\w*",
+        r"\bсідниц\w*",
+        r"\bши\w*",
+    ]
+
+    has_exercise_intent = any(
+        re.search(pattern, text)
+        for pattern in exercise_patterns
+    )
+
+    has_muscle_group = any(
+        re.search(pattern, text)
+        for pattern in muscle_patterns
+    )
+
+    return has_exercise_intent and has_muscle_group
 
 # ---------------------------------------------------------
 # Бічна панель
@@ -594,13 +628,16 @@ if prompt := st.chat_input("Поставте запитання..."):
     with st.chat_message("assistant"):
         with st.spinner("Думаю..."):
             try:
-                response = agent.invoke(
-                    {
-                        "messages": agent_messages
-                    }
-                )
+                if is_exercise_request(prompt):
+                    answer = exercise_lookup.invoke(prompt)
+                else:
+                    response = agent.invoke(
+                        {
+                            "messages": agent_messages
+                        }
+                    )
 
-                answer = response["messages"][-1].content
+                    answer = response["messages"][-1].content
 
                 if not answer:
                     answer = (
